@@ -1,5 +1,11 @@
 from data_storage import critics
 from math import sqrt
+import pprint
+
+
+###
+# USER BASED COLLABORATION FILTER
+###
 
 
 def sim_distance(preferences, person1, person2):
@@ -114,7 +120,6 @@ def get_recommendations(preferences, person, similarity=sim_pearson):
         for item in preferences[other]:
             # only score movies person has not seen yet
             if item not in preferences[person] or preferences[person][item] == 0:
-
                 # set default
                 totals.setdefault(item, 0)
                 # Add the product of similarity score times the rating
@@ -135,17 +140,83 @@ def transform_preferences(preferences):
     """
     Transform a Dictionary of User Preferences to a dictionary of Products
     This way we can show related movies, etc
-    :param preferences:
-    :return:
+    :param preferences: the dictionary of preferences. The key is the name of persons
+    :return: Dictionary of flipped items with users
     """
     result = {}
     for person in preferences:
         for item in preferences[person]:
-            result.setdefault(item,{})
+            result.setdefault(item, {})
 
-            #Flip item and person
-            result[item][person]=preferences[person][item]
+            # Flip item and person
+            result[item][person] = preferences[person][item]
     return result
+
+
+###
+# Item Based Collaboration Filtering
+###
+def calculate_similar_items(preferences, n=10, similarity=sim_pearson):
+    """
+    Calculate and return a dictionary with Items scores
+    :param preferences: the dictionary of preferences. The key is the item
+    :param n: how many items
+    :param similarity: which similarity function should create
+    :return:
+    """
+    # create a dictionary of items showing which other items they are most similar to
+    result = {}
+
+    item_preferences = transform_preferences(preferences)
+    c = 0
+    for item in item_preferences:
+        # status updates for large datasets
+        c += 1
+        if c % 100 == 0:
+            print "%d / %d" % (c, len(item_preferences))
+        # find the most similar items to this one
+        scores = top_matches(item_preferences, item, n=n, similarity=similarity)
+        result[item] = scores
+    return result
+
+
+def get_recommended_items(preferences, item_match, user):
+    """
+    Return a list of recommended items
+    :param preferences:the dictionary of preferences. The key is the name of the user
+    :param item_match: the result of  calculate_similar_items
+    :param user: user name
+    :return: a list
+    """
+    # get ratings of items from user
+    user_ratings = preferences[user]
+    scores = {}
+    total_sim = {}
+
+    # Loop over items rated by this user
+    for (item, rating) in user_ratings.items():
+        # Loop over items similar to this one
+        for (similarity, item2) in item_match[item]:
+            # Ignore item if user has already rate this item
+            if item2 in user_ratings:
+                continue
+
+            # weighted sum of rating times similarity
+            scores.setdefault(item2, 0)
+            scores[item2] += similarity * rating
+
+            # Sum all the similarities
+            total_sim.setdefault(item2, 0)
+            total_sim[item2] += similarity
+
+    # Divide each total score by total weighting to get an average
+    rankings = [(score / total_sim[item], item) for item, score in scores.items()]
+
+    # Return the rankings from highest to lowest
+    rankings.sort()
+    rankings.reverse()
+    return rankings
+
 
 # Main Method to compare distances
 if __name__ == '__main__':
@@ -163,7 +234,6 @@ if __name__ == '__main__':
     pr = sim_pearson(critics, pers1, pers2)
     print 'Pearson Correlation Coefficient Score between {} and {} is {}'.format(pers1, pers2, pr)
 
-
     # Get top 3 matches for Lisa
     top_3_matches = top_matches(critics, pers1, n)
     print 'Top 3 matches for {} are {} using Pearson'.format(pers1, top_3_matches)
@@ -171,7 +241,6 @@ if __name__ == '__main__':
     # Get top 3 matches for Lisa using Euclidean
     top_3_matches = top_matches(critics, pers1, n, sim_distance)
     print 'Top 3 matches for {} are {} using Euclidean'.format(pers1, top_3_matches)
-
 
     # Get Recommendations
     recommendations = get_recommendations(critics, 'Toby')
@@ -181,15 +250,21 @@ if __name__ == '__main__':
     recommendations = get_recommendations(critics, 'Toby', sim_distance)
     print 'Recommended movies for {} are {} using Euclidean'.format('Toby', recommendations)
 
-
     movies = transform_preferences(critics)
     # Get top 3 matches for Movie Superman Returns
     top_3_matches_movies = top_matches(movies, movie1, 3, sim_pearson)
-    print 'Top 3 movie matches for {} are {} using Pearson '.format(movie1,top_3_matches_movies)
+    print 'Top 3 movie matches for {} are {} using Pearson '.format(movie1, top_3_matches_movies)
 
     # Get top 3 matches for Movie Superman Returns using Euclidean
     top_3_matches_movies = top_matches(movies, movie1, 3, sim_distance)
     print 'Top 3 movie matches for {} are {} using Pearson '.format(movie1, top_3_matches_movies)
 
     # Get recommendations for specified movie
-    print get_recommendations(movies, movie2)
+    print 'Get Recommendations if I have seen movie {}, {}'.format(movies, get_recommendations(movies, movie2))
+    pp = pprint.PrettyPrinter(indent=4)
+    items_dictionary = calculate_similar_items(critics, 10, sim_distance)
+
+    # Item-based Collaboration Filtering
+    pp.pprint('Show all Similar Items {}'.format(items_dictionary))
+
+    print('Recommended items are {} for {} '.format(get_recommended_items(critics, items_dictionary, 'Toby'),'Toby'))
