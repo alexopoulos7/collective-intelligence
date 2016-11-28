@@ -77,6 +77,39 @@ def sim_pearson(preferences, person1, person2):
     return r
 
 
+def sim_tanimoto(preferences,person1,person2):
+    """
+    Compute the difference between person1 and person2 preferences using Tanimoto formula
+    http://mines.humanoriented.com/classes/2010/fall/csci568/portfolio_exports/sphilip/tani.html
+    :param preferences: the dictionary of preferences. The key is the name of persons
+    :param person1: Name of first person
+    :param person2: Name of second person
+    :return: [0,1] distance score, 1 means identical preferences
+    :return:
+    """
+    common_movies = [item for item in preferences[person1] if item in preferences[person2]]
+    length_of_common_movies = len(common_movies)
+    if length_of_common_movies == 0:
+        return 0
+    don = len(preferences[person1]) + len(preferences[person2]) - length_of_common_movies
+     
+    return length_of_common_movies/ float(don)
+
+
+def sim_tanimoto_sets(preferences,person1, person2):
+    person1_set = set(preferences[person1])
+    person2_set = set(preferences[person2])
+    print '{} preferences as a set {}'.format(person1,person1_set)
+
+    length_of_common_movies = len(set.intersection(*[person1_set, person2_set]))
+
+    union_cardinality = len(set.union(*[person1_set, person2_set]))
+    if length_of_common_movies == 0:
+        return 0
+
+    return length_of_common_movies / float(union_cardinality)
+
+
 def top_matches(preferences, person, n=5, similarity=sim_pearson):
     """
     Returns the best matches for person from the preferences dictionary
@@ -233,6 +266,14 @@ if __name__ == '__main__':
     # Calculate Pearson
     pr = sim_pearson(critics, pers1, pers2)
     print 'Pearson Correlation Coefficient Score between {} and {} is {}'.format(pers1, pers2, pr)
+
+    # Calculate Tanimoto
+    tan = sim_tanimoto(critics, pers1, pers2)
+    print 'Tanimoto Correlation Coefficient Score between {} and {} is {}'.format(pers1, pers2, tan)
+
+    # Calculate Tanimoto
+    tan_sets = sim_tanimoto_sets(critics, pers1, pers2)
+    print 'Tanimoto Correlation (Sets) Coefficient Score between {} and {} is {}'.format(pers1, pers2, tan_sets)
 
     # Get top 3 matches for Lisa
     top_3_matches = top_matches(critics, pers1, n)
