@@ -77,7 +77,7 @@ def sim_pearson(preferences, person1, person2):
     return r
 
 
-def sim_tanimoto(preferences,person1,person2):
+def sim_tanimoto(preferences, person1, person2):
     """
     Compute the difference between person1 and person2 preferences using Tanimoto formula
     http://mines.humanoriented.com/classes/2010/fall/csci568/portfolio_exports/sphilip/tani.html
@@ -92,14 +92,14 @@ def sim_tanimoto(preferences,person1,person2):
     if length_of_common_movies == 0:
         return 0
     don = len(preferences[person1]) + len(preferences[person2]) - length_of_common_movies
-     
-    return length_of_common_movies/ float(don)
+
+    return length_of_common_movies / float(don)
 
 
-def sim_tanimoto_sets(preferences,person1, person2):
+def sim_tanimoto_sets(preferences, person1, person2):
     person1_set = set(preferences[person1])
     person2_set = set(preferences[person2])
-    print '{} preferences as a set {}'.format(person1,person1_set)
+    print '{} preferences as a set {}'.format(person1, person1_set)
 
     length_of_common_movies = len(set.intersection(*[person1_set, person2_set]))
 
@@ -108,6 +108,34 @@ def sim_tanimoto_sets(preferences,person1, person2):
         return 0
 
     return length_of_common_movies / float(union_cardinality)
+
+
+def square_rooted(x):
+    return round(sqrt(sum([a*a for a in x])), 3)
+
+
+def sim_cosine(preferences, person1, person2):
+    si = {}
+    # common preferences
+    for item in preferences[person1]:
+        if item in preferences[person2]:
+            si[item] = 1
+
+    # if they have no common preferences return 0
+    if len(si) == 0:
+        return 0
+
+    # Calculate cosine similarity using common preferences
+    x = [preferences[person1][item] for item in si]
+    y = [preferences[person2][item] for item in si]
+
+    # Calculate cosine similarity using all preferences
+    # x = preferences[person1].values()
+    # y = preferences[person2].values()
+    print x, y
+    numerator = sum(a * b for a, b in zip(x, y))
+    denominator = square_rooted(x) * square_rooted(y)
+    return round(numerator / float(denominator), 3)
 
 
 def top_matches(preferences, person, n=5, similarity=sim_pearson):
@@ -257,7 +285,7 @@ if __name__ == '__main__':
     pers2 = 'Michael Philips'
     movie1 = 'Superman Returns'
     movie2 = 'Just My Luck'
-    n = 3
+    num_of_matches = 3
 
     # Calculate Euclidean
     ed = sim_distance(critics, pers1, pers2)
@@ -271,16 +299,16 @@ if __name__ == '__main__':
     tan = sim_tanimoto(critics, pers1, pers2)
     print 'Tanimoto Correlation Coefficient Score between {} and {} is {}'.format(pers1, pers2, tan)
 
-    # Calculate Tanimoto
-    tan_sets = sim_tanimoto_sets(critics, pers1, pers2)
-    print 'Tanimoto Correlation (Sets) Coefficient Score between {} and {} is {}'.format(pers1, pers2, tan_sets)
+    # Calculate Cosine
+    tan_sets = sim_cosine(critics, pers1, pers2)
+    print 'Cosine Similarity Score between {} and {} is {}'.format(pers1, pers2, tan_sets)
 
     # Get top 3 matches for Lisa
-    top_3_matches = top_matches(critics, pers1, n)
+    top_3_matches = top_matches(critics, pers1, num_of_matches)
     print 'Top 3 matches for {} are {} using Pearson'.format(pers1, top_3_matches)
 
     # Get top 3 matches for Lisa using Euclidean
-    top_3_matches = top_matches(critics, pers1, n, sim_distance)
+    top_3_matches = top_matches(critics, pers1, num_of_matches, sim_distance)
     print 'Top 3 matches for {} are {} using Euclidean'.format(pers1, top_3_matches)
 
     # Get Recommendations
@@ -293,11 +321,11 @@ if __name__ == '__main__':
 
     movies = transform_preferences(critics)
     # Get top 3 matches for Movie Superman Returns
-    top_3_matches_movies = top_matches(movies, movie1, 3, sim_pearson)
+    top_3_matches_movies = top_matches(movies, movie1, num_of_matches, sim_pearson)
     print 'Top 3 movie matches for {} are {} using Pearson '.format(movie1, top_3_matches_movies)
 
     # Get top 3 matches for Movie Superman Returns using Euclidean
-    top_3_matches_movies = top_matches(movies, movie1, 3, sim_distance)
+    top_3_matches_movies = top_matches(movies, movie1, num_of_matches, sim_distance)
     print 'Top 3 movie matches for {} are {} using Pearson '.format(movie1, top_3_matches_movies)
 
     # Get recommendations for specified movie
@@ -308,4 +336,4 @@ if __name__ == '__main__':
     # Item-based Collaboration Filtering
     pp.pprint('Show all Similar Items {}'.format(items_dictionary))
 
-    print('Recommended items are {} for {} '.format(get_recommended_items(critics, items_dictionary, 'Toby'),'Toby'))
+    print('Recommended items are {} for {} '.format(get_recommended_items(critics, items_dictionary, 'Toby'), 'Toby'))
