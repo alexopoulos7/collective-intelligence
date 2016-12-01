@@ -13,8 +13,14 @@ def get_word_counts(url):
     :param url: Url to parse feed
     :return: Returns title and dictionary of word counts for an RSS Feed
     """
-    # parse the feed
-    d = feedparser.parse(url)
+    try:
+
+        # parse the feed
+        d = feedparser.parse(url)
+    except Exception as e:
+        print ('Failed to parse url {}'.format(url))
+        print (str(e))
+        return None
     wc = {}
 
     # Loop over all entries
@@ -29,7 +35,10 @@ def get_word_counts(url):
         for word in words:
             wc.setdefault(word, 0)
             wc[word] += 1
-    return d.feed.title, wc
+    if 'title' in d.feed:
+        return d.feed.title, wc
+    else:
+        return url, wc
 
 
 def get_words(blog):
@@ -74,7 +83,7 @@ def save_word_list(word_list, word_counts):
     :param word_counts:
     :return:
     """
-    out = file('blogdata.txt','w')
+    out = file('blogdata.txt', 'w')
     out.write('Blog')
     for word in word_list:
         out.write('\t%s' % word)
@@ -85,7 +94,7 @@ def save_word_list(word_list, word_counts):
         out.write(blog)
         for word in word_list:
             if word in wc:
-                out.write('\t%d' %wc[word])
+                out.write('\t%d' % wc[word])
             else:
                 out.write('\t0')
         out.write('\n')
@@ -111,7 +120,7 @@ def generate():
 
     # get word list
     word_list = filter_word_list(blog_count, len(feed_list))
-    save_word_list(word_list,word_counts)
+    save_word_list(word_list, word_counts)
 
 
 if __name__ == '__main__':
