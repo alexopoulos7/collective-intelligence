@@ -14,3 +14,6 @@ class BiCluster:
         self.right = right
         self.distance = distance
         self.id = id
+
+    def __str__(self):
+        return 'Cluster {}, Distance:{}, Left_Length:{}, Right_Length:{}'.format(self.id, self.distance, len(self.left.vec), len(self.right.vec))

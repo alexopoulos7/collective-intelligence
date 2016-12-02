@@ -1,5 +1,6 @@
 from math import sqrt
 from cluster import BiCluster
+from dendogram import draw_dendogram
 
 
 def pearson_distance(v1, v2):
@@ -52,9 +53,9 @@ def read_file(filename):
         # The data for this row is the remainder of the row
         # data.append([float(x) for x in p[1:]])
         list_to_add = [float(x) for x in p[1:]]
-        print 'Add to our data list with length {}'.format(len(list_to_add))
+        # print 'Add to our data list with length {}'.format(len(list_to_add))
         data.append(list_to_add)
-    return column_names, row_names, data
+    return row_names, column_names, data
 
 
 def hierarchical_cluster(rows, distance=pearson_distance):
@@ -73,12 +74,13 @@ def hierarchical_cluster(rows, distance=pearson_distance):
     current_cluster_id = -1
 
     # Clusters are initially just the rows
-    clusters = [BiCluster(rows[i], id=1) for i in range(len(rows))]
+    clusters = [BiCluster(rows[i], id=i) for i in range(len(rows))]
 
     while len(clusters) > 1:
+        print 'Loop with length of clusters = {}'.format(len(clusters))
         lowest_pair = (0, 1)
         closest = distance(clusters[0].vec, clusters[1].vec)
-
+        print 'Closest distance so far is {}'.format(closest)
         # Loop through every pair looking for the smallest distance
         for i in range(len(clusters)):
             for j in range(i + 1, len(clusters)):
@@ -91,29 +93,32 @@ def hierarchical_cluster(rows, distance=pearson_distance):
                 if d < closest:
                     closest = d
                     lowest_pair = (i, j)
+                    print 'Found lowest distance between i={} and j={} is ={}'.format(i, j, closest)
 
-            # Calculate the average of the 2 clusters
-            merged_clusters = [
-                (clusters[lowest_pair[0]].vec[i] + clusters[lowest_pair[1]].vec[i]) / 2.0 for i in
-                range(len(clusters[0].vec))
-                ]
+        # Calculate the average of the 2 clusters
+        merged_clusters = [
+            (clusters[lowest_pair[0]].vec[i] + clusters[lowest_pair[1]].vec[i]) / 2.0 for i in
+            range(len(clusters[0].vec))
+            ]
+        print 'Lets create the new Merged Cluster id = {} between {} and {}'.format(current_cluster_id, lowest_pair[0],
+                                                                                    lowest_pair[1])
+        # Create the new cluster
+        new_cluster = BiCluster(merged_clusters, left=clusters[lowest_pair[0]], right=clusters[lowest_pair[1]],
+                                distance=closest, id=current_cluster_id)
+        print 'New Clusters Left is {} '.format(new_cluster)
 
-            # Create the new cluster
-            new_cluster = BiCluster(merged_clusters, left=clusters[lowest_pair[0]], right=clusters[lowest_pair[1]],
-                                    distance=closest, id=current_cluster_id)
-
-            # cluster ids the were not in the original set are negative
-            current_cluster_id -= 1
-            del clusters[lowest_pair[1]]
-            del clusters[lowest_pair[0]]
-            clusters.append(new_cluster)
-        return clusters[0]
+        # cluster ids that were not in the original set are negative
+        current_cluster_id -= 1
+        del clusters[lowest_pair[1]]
+        del clusters[lowest_pair[0]]
+        clusters.append(new_cluster)
+    return clusters[0]
 
 
-def print_clusters(clusters, labels=None, n=0):
+def print_clusters(clusters_to_print, labels=None, n=0):
     """
     Print Clusters tree recursively
-    :param clusters:
+    :param clusters_to_print:
     :param labels:
     :param n:
     :return:
@@ -122,23 +127,25 @@ def print_clusters(clusters, labels=None, n=0):
     # indent to make hierarchy layout
     for i in range(n):
         print '  '
-        if clusters.id <0:
-            # negative ids mean that this is branch
-            print '-'
+    if clusters_to_print.id < 0:
+        # negative ids mean that this is branch
+        print '-'
+    else:
+        # positive ids means that this is Endpoint
+        if labels is None:
+            print clusters_to_print.id
         else:
-            # positive ids means that this is Endpoint
-            if labels is None:
-                print clusters.id
-            else:
-                print labels[clusters.id]
+            print labels[clusters_to_print.id]
     # Now Print the Right and Left Branches
-    print_clusters(clusters.left, labels=labels, n=n + 1)
-    print_clusters(clusters.right, labels=labels, n=n + 1)
-
-
+    if clusters_to_print.left is not None:
+        print_clusters(clusters_to_print.left, labels=labels, n=n + 1)
+    if clusters_to_print.right is not None:
+        print_clusters(clusters_to_print.right, labels=labels, n=n + 1)
 
 
 if __name__ == '__main__':
-    cols, rows, data = read_file('../blogdata.txt')
+    blog_names, words, data = read_file('../blogdata.txt')
     clusters = hierarchical_cluster(data)
-    print clusters
+    # print clusters
+    print_clusters(clusters, labels=blog_names)
+    draw_dendogram(clusters, labels=blog_names, jpeg='blog_cluster.jpg')
