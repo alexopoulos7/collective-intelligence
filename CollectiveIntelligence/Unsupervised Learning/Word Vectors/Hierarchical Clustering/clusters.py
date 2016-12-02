@@ -143,9 +143,19 @@ def print_clusters(clusters_to_print, labels=None, n=0):
         print_clusters(clusters_to_print.right, labels=labels, n=n + 1)
 
 
+def rotate_matrix(data):
+    rotated_matrix = []
+    for i in range(len(data[0])):
+        new_row = [data[j][i] for j in range(len(data))]
+        rotated_matrix.append(new_row)
+    return rotated_matrix
+
+
 if __name__ == '__main__':
     blog_names, words, data = read_file('../blogdata.txt')
     clusters = hierarchical_cluster(data)
-    # print clusters
     print_clusters(clusters, labels=blog_names)
     draw_dendogram(clusters, labels=blog_names, jpeg='blog_cluster.jpg')
+
+    print ' Lets rotate Matrix'
+    rotate_matrix(data)
