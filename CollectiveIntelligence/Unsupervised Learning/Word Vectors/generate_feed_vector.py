@@ -13,14 +13,9 @@ def get_word_counts(url):
     :param url: Url to parse feed
     :return: Returns title and dictionary of word counts for an RSS Feed
     """
-    try:
+    # parse the feed
+    d = feedparser.parse(url)
 
-        # parse the feed
-        d = feedparser.parse(url)
-    except Exception as e:
-        print ('Failed to parse url {}'.format(url))
-        print (str(e))
-        return None
     wc = {}
 
     # Loop over all entries
@@ -38,7 +33,7 @@ def get_word_counts(url):
     if 'title' in d.feed:
         return d.feed.title, wc
     else:
-        return url, wc
+        return None, {}  # url, wc
 
 
 def get_words(blog):
@@ -51,7 +46,7 @@ def get_words(blog):
     txt = re.compile(r'<[^>]+>').sub('', blog)
 
     # split words by all non-alpha characters
-    words = re.compile(r'[^A-Z^a-z]+').split(blog)
+    words = re.compile(r'[^A-Z^a-z]+').split(txt)
 
     # convert to lowercase
     return [word.lower() for word in words if word != '']
@@ -68,7 +63,7 @@ def filter_word_list(blog_word_count, length_of_feed_list):
     word_list = []
     upper_limit = 0.5
     lower_limit = 0.1
-    for w, bc in blog_word_count:
+    for w, bc in blog_word_count.iteritems():
         fraction = float(bc) / length_of_feed_list
         if lower_limit < fraction < upper_limit:
             word_list.append(w)
@@ -89,15 +84,17 @@ def save_word_list(word_list, word_counts):
         out.write('\t%s' % word)
     out.write('\n')
     for blog, wc in word_counts.items():
-        # deal with unicode outside ascii range
-        blog = blog
-        out.write(blog)
-        for word in word_list:
-            if word in wc:
-                out.write('\t%d' % wc[word])
-            else:
-                out.write('\t0')
-        out.write('\n')
+        if blog is not None and len(blog) > 0:
+            # deal with unicode outside ascii range
+            blog = blog.encode('ascii', 'ignore')
+            print 'Blog name is {}'.format(blog)
+            out.write(blog)
+            for word in word_list:
+                if word in wc:
+                    out.write('\t%d' % wc[word])
+                else:
+                    out.write('\t0')
+            out.write('\n')
 
 
 def generate():
