@@ -1,5 +1,6 @@
 from dendogram import draw_dendogram
 from hierarchical_clustering import hierarchical_cluster
+from k_means_clustering import k_means_clustering
 
 
 def read_file(filename):
@@ -37,7 +38,6 @@ def print_clusters(clusters_to_print, labels=None, n=0):
     :param n:
     :return:
     """
-
     # indent to make hierarchy layout
     for i in range(n):
         print '  '
@@ -78,5 +78,8 @@ if __name__ == '__main__':
     columnar_clusters = hierarchical_cluster(columnar_data)
     draw_dendogram(columnar_clusters, labels=words, jpeg='word_cluster.jpg')
     print ('3. K-Means Clustering')
-
+    k_cluster = k_means_clustering(data, k=20)
+    print k_cluster
+    for k in range(20):
+        print '{} {}'.format(k,[blog_names[r] for r in k_cluster[k]])
     print ('End of Unsupervised Algorithms')
