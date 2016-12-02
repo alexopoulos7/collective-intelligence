@@ -152,10 +152,13 @@ def rotate_matrix(data):
 
 
 if __name__ == '__main__':
+    print '1. Fetch data and create Hierarchical Clusters.'
     blog_names, words, data = read_file('../blogdata.txt')
     clusters = hierarchical_cluster(data)
     print_clusters(clusters, labels=blog_names)
     draw_dendogram(clusters, labels=blog_names, jpeg='blog_cluster.jpg')
 
-    print ' Lets rotate Matrix'
-    rotate_matrix(data)
+    print '2. Lets rotate Matrix and do Column Clustering.'
+    columnar_data = rotate_matrix(data)
+    columnar_clusters = hierarchical_cluster(columnar_data)
+    draw_dendogram(columnar_clusters, labels=words, jpeg='word_cluster.jpg')
