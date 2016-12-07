@@ -1,6 +1,7 @@
 from dendogram import draw_dendogram
 from hierarchical_clustering import hierarchical_cluster
 from k_means_clustering import k_means_clustering
+from multidimensional_scaling import draw2d, scale_down
 
 
 def read_file(filename):
@@ -71,15 +72,17 @@ if __name__ == '__main__':
     blog_names, words, data = read_file('../blogdata.txt')
     clusters = hierarchical_cluster(data)
     print_clusters(clusters, labels=blog_names)
-    draw_dendogram(clusters, labels=blog_names, jpeg='blog_cluster.jpg')
+   # draw_dendogram(clusters, labels=blog_names, jpeg='blog_cluster.jpg')
 
     print '2. Lets rotate Matrix and do Column Clustering.'
-    columnar_data = rotate_matrix(data)
-    columnar_clusters = hierarchical_cluster(columnar_data)
-    draw_dendogram(columnar_clusters, labels=words, jpeg='word_cluster.jpg')
+    #columnar_data = rotate_matrix(data)
+    #columnar_clusters = hierarchical_cluster(columnar_data)
+    #draw_dendogram(columnar_clusters, labels=words, jpeg='word_cluster.jpg')
     print ('3. K-Means Clustering')
-    k_cluster = k_means_clustering(data, k=20)
-    print k_cluster
-    for k in range(20):
-        print '{} {}'.format(k,[blog_names[r] for r in k_cluster[k]])
+    #k_cluster = k_means_clustering(data, k=20)
+    #print k_cluster
+    #for k in range(20):
+    #    print '{} {}'.format(k, [blog_names[r] for r in k_cluster[k]])
+    print('4. Multi Dimensional Scaling')
+    draw2d(scale_down(data), blog_names, 'multi_dimensional.jpg')
     print ('End of Unsupervised Algorithms')
