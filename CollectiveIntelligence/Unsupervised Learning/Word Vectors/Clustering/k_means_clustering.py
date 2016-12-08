@@ -20,7 +20,7 @@ def k_means_clustering(rows, distance=pearson_distance, k=4):
     # Create k RANDOMLY placed centroids
     clusters = [[random() * (ranges[i][1] - ranges[i][0]) + ranges[i][0] for i in range(len(rows[0]))] for j in
                 range(k)]
-
+    distances_from_centroids = {}
     last_matches = None
     best_matches = None
     for t in range(100):
@@ -53,4 +53,9 @@ def k_means_clustering(rows, distance=pearson_distance, k=4):
                     avgs[j] /= len(best_matches[i])
                 clusters[i] = avgs
 
-    return best_matches
+    # Chapter 3 Exercise 5: Return along with the cluster results the total distance between all items
+    # and their respective centroids
+    for i in range(k):
+        for j in range(len(best_matches[i])):
+            distances_from_centroids[best_matches[i][j]] = distance(clusters[i],rows[best_matches[i][j]])
+    return best_matches, distances_from_centroids
